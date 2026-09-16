@@ -1,4 +1,4 @@
-// Atmosly — Phase 4: Open-Meteo weather API integration.
+// Atmosly — Phase 6: dynamic weather data from Open-Meteo.
 
 const searchForm = document.querySelector('#search-form');
 const cityInput = document.querySelector('#city-input');
@@ -15,7 +15,8 @@ const weatherElements = {
   humidity: document.querySelector('#humidity'),
   wind: document.querySelector('#wind'),
   pressure: document.querySelector('#pressure'),
-  visibility: document.querySelector('#visibility')
+  visibility: document.querySelector('#visibility'),
+  forecast: document.querySelector('#forecast-list')
 };
 
 const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
@@ -24,6 +25,7 @@ const LOCATION_CACHE_KEY = 'atmosly-location-cache';
 const WEATHER_CACHE_TTL = 5 * 60 * 1000;
 const SUGGESTION_DELAY = 300;
 const MAX_SUGGESTIONS = 5;
+const FORECAST_DAYS = 5;
 
 let selectedLocation = null;
 let suggestionRequestId = 0;
@@ -53,7 +55,7 @@ searchForm.addEventListener('submit', async (event) => {
     const weather = await getWeather(location.latitude, location.longitude);
 
     selectedLocation = location;
-    displayCurrentWeather(location, weather);
+    displayWeather(location, weather);
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
     console.error('Atmosly weather request failed:', error);
@@ -195,7 +197,7 @@ async function loadWeatherForLocation(location) {
 
   try {
     const weather = await getWeather(location.latitude, location.longitude);
-    displayCurrentWeather(location, weather);
+    displayWeather(location, weather);
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
     console.error('Atmosly weather request failed:', error);
@@ -245,6 +247,12 @@ async function getWeather(latitude, longitude) {
       'surface_pressure',
       'visibility'
     ].join(','),
+    daily: [
+      'weather_code',
+      'temperature_2m_max',
+      'temperature_2m_min'
+    ].join(','),
+    forecast_days: String(FORECAST_DAYS),
     temperature_unit: 'celsius',
     wind_speed_unit: 'kmh',
     timezone: 'auto'
@@ -263,6 +271,11 @@ async function getWeather(latitude, longitude) {
   return weather;
 }
 
+function displayWeather(location, weather) {
+  displayCurrentWeather(location, weather);
+  displayForecast(weather);
+}
+
 function displayCurrentWeather(location, weather) {
   const current = weather.current;
   const units = weather.current_units;
@@ -277,6 +290,33 @@ function displayCurrentWeather(location, weather) {
   weatherElements.wind.textContent = `${Math.round(current.wind_speed_10m)} ${units.wind_speed_10m}`;
   weatherElements.pressure.textContent = `${Math.round(current.surface_pressure)} ${units.surface_pressure}`;
   weatherElements.visibility.textContent = `${formatVisibility(current.visibility)} ${units.visibility}`;
+}
+
+function displayForecast(weather) {
+  const daily = weather.daily;
+
+  if (!daily || !daily.time || !daily.time.length) {
+    weatherElements.forecast.innerHTML = '';
+    return;
+  }
+
+  const cards = daily.time.slice(0, FORECAST_DAYS).map((date, index) => {
+    const weatherCode = daily.weather_code[index];
+    const max = Math.round(daily.temperature_2m_max[index]);
+    const min = Math.round(daily.temperature_2m_min[index]);
+    const dayLabel = index === 0 ? 'Today' : formatForecastDate(date, weather.timezone);
+
+    return `
+      <article class="forecast-card${index === 0 ? ' featured' : ''}">
+        <span class="forecast-day">${escapeHtml(dayLabel)}</span>
+        <span class="forecast-icon" aria-hidden="true">${getWeatherIcon(weatherCode)}</span>
+        <strong>${max}° / ${min}°</strong>
+        <span class="forecast-condition">${escapeHtml(getWeatherCondition(weatherCode))}</span>
+      </article>
+    `;
+  }).join('');
+
+  weatherElements.forecast.innerHTML = cards;
 }
 
 function setLoadingState(isLoading) {
@@ -380,6 +420,17 @@ function formatWeatherDate(dateTime, timezone) {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: timezone
+  }).format(date);
+}
+
+function formatForecastDate(dateTime, timezone) {
+  const date = new Date(`${dateTime}T12:00:00`);
+
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
     timeZone: timezone
   }).format(date);
 }
