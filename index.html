@@ -9,6 +9,59 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    .search-wrap { position: relative; max-width: 700px; }
+    .search-wrap .search-form { max-width: none; }
+    .location-suggestions {
+      position: absolute;
+      z-index: 20;
+      top: calc(100% + 8px);
+      right: 0;
+      left: 0;
+      display: none;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: var(--surface);
+      box-shadow: 0 18px 45px rgba(17, 24, 39, .14);
+    }
+    .location-suggestions.is-visible { display: block; }
+    .location-suggestion {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 16px;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      background: transparent;
+      text-align: left;
+    }
+    .location-suggestion:last-child { border-bottom: 0; }
+    .location-suggestion:hover,
+    .location-suggestion:focus-visible,
+    .location-suggestion.is-active { background: #f1f6ff; outline: 0; }
+    .suggestion-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      place-items: center;
+      border-radius: 10px;
+      color: var(--accent);
+      background: #edf4ff;
+      font-size: .95rem;
+    }
+    .suggestion-copy { min-width: 0; }
+    .suggestion-name { display: block; font-weight: 700; }
+    .suggestion-meta { display: block; margin-top: 2px; color: var(--muted); font-size: .78rem; }
+    .search-form button:disabled { cursor: wait; opacity: .72; }
+    @media (max-width: 560px) {
+      .location-suggestions { top: calc(100% + 7px); }
+      .location-suggestion { padding: 12px 13px; }
+    }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -31,12 +84,15 @@
           <h1>Know the weather.<br><span>Plan your day.</span></h1>
           <p class="hero-text">Get clear, up-to-date weather conditions and forecasts for any city around the world.</p>
 
-          <form class="search-form" id="search-form" role="search">
-            <label class="sr-only" for="city-input">Search for a city</label>
-            <span class="search-icon" aria-hidden="true">⌕</span>
-            <input id="city-input" name="city" type="search" placeholder="Search for a city..." autocomplete="off" required>
-            <button type="submit">Search</button>
-          </form>
+          <div class="search-wrap">
+            <form class="search-form" id="search-form" role="search">
+              <label class="sr-only" for="city-input">Search for a city</label>
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <input id="city-input" name="city" type="search" placeholder="Search for a city..." autocomplete="off" required aria-autocomplete="list" aria-controls="location-suggestions" aria-expanded="false">
+              <button type="submit">Search</button>
+            </form>
+            <div class="location-suggestions" id="location-suggestions" role="listbox" aria-label="Location suggestions"></div>
+          </div>
           <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
         </div>
       </div>
@@ -118,7 +174,7 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <p><strong>Atmosly</strong> — Real-time weather, wherever you are.</p>
-      <p>Weather data will be connected in the next phase.</p>
+      <p>Weather data powered by Open-Meteo.</p>
     </div>
   </footer>
 
