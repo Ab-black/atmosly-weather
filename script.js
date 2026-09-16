@@ -47,7 +47,7 @@ searchForm.addEventListener('submit', async (event) => {
   const requestStartedAt = performance.now();
 
   try {
-    const location = selectedLocation && normalizeLocationName(selectedLocation) === city.toLowerCase()
+    const location = selectedLocation && normalizeLocationName(selectedLocation).toLowerCase() === city.toLowerCase()
       ? selectedLocation
       : await getLocation(city);
     const weather = await getWeather(location.latitude, location.longitude);
@@ -171,6 +171,7 @@ function renderLocationSuggestions(locations) {
   }).join('');
 
   suggestionsBox.querySelectorAll('.location-suggestion').forEach((button, index) => {
+    button.location = locations[index];
     button.addEventListener('mousedown', (event) => {
       event.preventDefault();
       selectLocation(locations[index]);
