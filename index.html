@@ -3,63 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Atmosly — a responsive weather forecast website providing real-time weather information.">
+  <meta name="description" content="Atmosly — a clean, responsive weather forecast website providing real-time weather information.">
   <title>Atmosly | Weather Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html" aria-label="Atmosly home">Atmosly</a>
+      <a class="brand" href="index.html" aria-label="Atmosly home"><span class="brand-mark" aria-hidden="true">A</span>Atmosly</a>
       <nav aria-label="Primary navigation">
-        <a href="#weather">Weather</a>
-        <a href="#forecast">Forecast</a>
+        <a class="nav-link active" href="#weather">Weather</a>
+        <a class="nav-link" href="#forecast">Forecast</a>
       </nav>
     </div>
   </header>
 
   <main>
     <section class="hero" id="weather">
-      <div class="container">
-        <p class="eyebrow">Real-time weather</p>
-        <h1>Weather, wherever you are.</h1>
-        <p class="hero-text">Search for a city to view current conditions and an upcoming forecast.</p>
+      <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
+      <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Live weather</p>
+          <h1>Know the weather.<br><span>Plan your day.</span></h1>
+          <p class="hero-text">Get clear, up-to-date weather conditions and forecasts for any city around the world.</p>
 
-        <form class="search-form" id="search-form" role="search">
-          <label class="sr-only" for="city-input">Search for a city</label>
-          <input id="city-input" name="city" type="search" placeholder="Search city..." autocomplete="off" required>
-          <button type="submit">Search</button>
-        </form>
-        <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+          <form class="search-form" id="search-form" role="search">
+            <label class="sr-only" for="city-input">Search for a city</label>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="city-input" name="city" type="search" placeholder="Search for a city..." autocomplete="off" required>
+            <button type="submit">Search</button>
+          </form>
+          <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+        </div>
       </div>
     </section>
 
     <section class="weather-section" aria-labelledby="current-weather-title">
       <div class="container">
         <div class="section-heading">
-          <p class="eyebrow">Current conditions</p>
-          <h2 id="current-weather-title">Weather in your city</h2>
+          <div>
+            <p class="eyebrow">Current conditions</p>
+            <h2 id="current-weather-title">Today's weather</h2>
+          </div>
+          <p class="section-note">Local conditions at a glance</p>
         </div>
 
         <article class="current-weather" aria-live="polite">
           <div class="current-main">
-            <div>
-              <p class="location" id="location">Search for a city</p>
-              <p class="date" id="date">Your weather information will appear here.</p>
+            <div class="location-row">
+              <span class="location-pin" aria-hidden="true">⌖</span>
+              <div>
+                <p class="location" id="location">Port Harcourt, Nigeria</p>
+                <p class="date" id="date">Wednesday, September 16, 2026</p>
+              </div>
             </div>
+
             <div class="temperature-wrap">
-              <span class="weather-icon" id="weather-icon" aria-hidden="true">☁️</span>
-              <p class="temperature" id="temperature">--°</p>
+              <span class="weather-icon" id="weather-icon" aria-hidden="true">☀️</span>
+              <div>
+                <p class="temperature" id="temperature">29°</p>
+                <p class="condition" id="condition">Partly Cloudy</p>
+              </div>
             </div>
-            <p class="condition" id="condition">No weather data yet</p>
-            <p class="feels-like" id="feels-like">Feels like --°</p>
+            <p class="feels-like" id="feels-like">Feels like 32°</p>
           </div>
 
           <div class="details-grid" aria-label="Weather details">
-            <div class="detail-card"><span>Humidity</span><strong id="humidity">--%</strong></div>
-            <div class="detail-card"><span>Wind</span><strong id="wind">--</strong></div>
-            <div class="detail-card"><span>Pressure</span><strong id="pressure">--</strong></div>
-            <div class="detail-card"><span>Visibility</span><strong id="visibility">--</strong></div>
+            <div class="detail-card">
+              <span class="detail-icon" aria-hidden="true">◒</span>
+              <div><span>Humidity</span><strong id="humidity">78%</strong></div>
+            </div>
+            <div class="detail-card">
+              <span class="detail-icon" aria-hidden="true">↝</span>
+              <div><span>Wind speed</span><strong id="wind">14 km/h</strong></div>
+            </div>
+            <div class="detail-card">
+              <span class="detail-icon" aria-hidden="true">◉</span>
+              <div><span>Pressure</span><strong id="pressure">1012 hPa</strong></div>
+            </div>
+            <div class="detail-card">
+              <span class="detail-icon" aria-hidden="true">◌</span>
+              <div><span>Visibility</span><strong id="visibility">8 km</strong></div>
+            </div>
           </div>
         </article>
       </div>
@@ -68,23 +97,28 @@
     <section class="forecast-section" id="forecast" aria-labelledby="forecast-title">
       <div class="container">
         <div class="section-heading">
-          <p class="eyebrow">Upcoming weather</p>
-          <h2 id="forecast-title">Forecast</h2>
+          <div>
+            <p class="eyebrow">Upcoming weather</p>
+            <h2 id="forecast-title">5-day forecast</h2>
+          </div>
+          <p class="section-note">Plan ahead with confidence</p>
         </div>
+
         <div class="forecast-grid" id="forecast-list" aria-live="polite">
-          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
-          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
-          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
-          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
-          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+          <article class="forecast-card featured"><span class="forecast-day">Today</span><span class="forecast-icon" aria-hidden="true">☀️</span><strong>29° / 24°</strong><span class="forecast-condition">Partly cloudy</span></article>
+          <article class="forecast-card"><span class="forecast-day">Thu, Sep 17</span><span class="forecast-icon" aria-hidden="true">🌤️</span><strong>30° / 24°</strong><span class="forecast-condition">Mostly sunny</span></article>
+          <article class="forecast-card"><span class="forecast-day">Fri, Sep 18</span><span class="forecast-icon" aria-hidden="true">🌧️</span><strong>28° / 23°</strong><span class="forecast-condition">Light rain</span></article>
+          <article class="forecast-card"><span class="forecast-day">Sat, Sep 19</span><span class="forecast-icon" aria-hidden="true">⛅</span><strong>29° / 24°</strong><span class="forecast-condition">Partly cloudy</span></article>
+          <article class="forecast-card"><span class="forecast-day">Sun, Sep 20</span><span class="forecast-icon" aria-hidden="true">🌦️</span><strong>27° / 23°</strong><span class="forecast-condition">Showers</span></article>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <p>Atmosly — Real-time weather, wherever you are.</p>
+    <div class="container footer-inner">
+      <p><strong>Atmosly</strong> — Real-time weather, wherever you are.</p>
+      <p>Weather data will be connected in the next phase.</p>
     </div>
   </footer>
 
