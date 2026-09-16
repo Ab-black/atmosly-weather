@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Atmosly — a responsive weather forecast website providing real-time weather information.">
+  <title>Atmosly | Weather Forecast</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Atmosly home">Atmosly</a>
+      <nav aria-label="Primary navigation">
+        <a href="#weather">Weather</a>
+        <a href="#forecast">Forecast</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="weather">
+      <div class="container">
+        <p class="eyebrow">Real-time weather</p>
+        <h1>Weather, wherever you are.</h1>
+        <p class="hero-text">Search for a city to view current conditions and an upcoming forecast.</p>
+
+        <form class="search-form" id="search-form" role="search">
+          <label class="sr-only" for="city-input">Search for a city</label>
+          <input id="city-input" name="city" type="search" placeholder="Search city..." autocomplete="off" required>
+          <button type="submit">Search</button>
+        </form>
+        <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="weather-section" aria-labelledby="current-weather-title">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Current conditions</p>
+          <h2 id="current-weather-title">Weather in your city</h2>
+        </div>
+
+        <article class="current-weather" aria-live="polite">
+          <div class="current-main">
+            <div>
+              <p class="location" id="location">Search for a city</p>
+              <p class="date" id="date">Your weather information will appear here.</p>
+            </div>
+            <div class="temperature-wrap">
+              <span class="weather-icon" id="weather-icon" aria-hidden="true">☁️</span>
+              <p class="temperature" id="temperature">--°</p>
+            </div>
+            <p class="condition" id="condition">No weather data yet</p>
+            <p class="feels-like" id="feels-like">Feels like --°</p>
+          </div>
+
+          <div class="details-grid" aria-label="Weather details">
+            <div class="detail-card"><span>Humidity</span><strong id="humidity">--%</strong></div>
+            <div class="detail-card"><span>Wind</span><strong id="wind">--</strong></div>
+            <div class="detail-card"><span>Pressure</span><strong id="pressure">--</strong></div>
+            <div class="detail-card"><span>Visibility</span><strong id="visibility">--</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="forecast-section" id="forecast" aria-labelledby="forecast-title">
+      <div class="container">
+        <div class="section-heading">
+          <p class="eyebrow">Upcoming weather</p>
+          <h2 id="forecast-title">Forecast</h2>
+        </div>
+        <div class="forecast-grid" id="forecast-list" aria-live="polite">
+          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+          <article class="forecast-card"><span>Day</span><strong>--</strong><small>Forecast will appear here</small></article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Atmosly — Real-time weather, wherever you are.</p>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
