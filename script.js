@@ -3,6 +3,7 @@
 const searchForm = document.querySelector('#search-form');
 const cityInput = document.querySelector('#city-input');
 const formMessage = document.querySelector('#form-message');
+const suggestionsBox = document.querySelector('#location-suggestions');
 
 const weatherElements = {
   location: document.querySelector('#location'),
@@ -21,6 +22,13 @@ const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
 const LOCATION_CACHE_KEY = 'atmosly-location-cache';
 const WEATHER_CACHE_TTL = 5 * 60 * 1000;
+const SUGGESTION_DELAY = 300;
+const MAX_SUGGESTIONS = 5;
+
+let selectedLocation = null;
+let suggestionRequestId = 0;
+let suggestionTimer = null;
+let activeSuggestionIndex = -1;
 
 searchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -28,18 +36,23 @@ searchForm.addEventListener('submit', async (event) => {
   const city = cityInput.value.trim();
 
   if (!city) {
+    closeSuggestions();
     formMessage.textContent = 'Please enter a city to search.';
     cityInput.focus();
     return;
   }
 
+  closeSuggestions();
   setLoadingState(true);
   const requestStartedAt = performance.now();
 
   try {
-    const location = await getLocation(city);
+    const location = selectedLocation && normalizeLocationName(selectedLocation) === city.toLowerCase()
+      ? selectedLocation
+      : await getLocation(city);
     const weather = await getWeather(location.latitude, location.longitude);
 
+    selectedLocation = location;
     displayCurrentWeather(location, weather);
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
@@ -51,17 +64,76 @@ searchForm.addEventListener('submit', async (event) => {
   }
 });
 
-async function getLocation(city) {
-  const normalizedCity = city.toLowerCase();
-  const cachedLocation = getCachedLocation(normalizedCity);
+cityInput.addEventListener('input', () => {
+  selectedLocation = null;
+  activeSuggestionIndex = -1;
 
-  if (cachedLocation) {
-    return cachedLocation;
+  clearTimeout(suggestionTimer);
+
+  const query = cityInput.value.trim();
+
+  if (query.length < 2) {
+    closeSuggestions();
+    return;
   }
 
+  suggestionTimer = setTimeout(() => fetchLocationSuggestions(query), SUGGESTION_DELAY);
+});
+
+cityInput.addEventListener('keydown', (event) => {
+  const options = getSuggestionOptions();
+
+  if (!options.length || !suggestionsBox.classList.contains('is-visible')) {
+    if (event.key === 'Escape') closeSuggestions();
+    return;
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    activeSuggestionIndex = (activeSuggestionIndex + 1) % options.length;
+    updateActiveSuggestion(options);
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    activeSuggestionIndex = activeSuggestionIndex <= 0 ? options.length - 1 : activeSuggestionIndex - 1;
+    updateActiveSuggestion(options);
+  } else if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+    event.preventDefault();
+    selectLocation(options[activeSuggestionIndex].location);
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    closeSuggestions();
+  }
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.search-wrap')) {
+    closeSuggestions();
+  }
+});
+
+async function fetchLocationSuggestions(query) {
+  const requestId = ++suggestionRequestId;
+
+  try {
+    const locations = await searchLocations(query, MAX_SUGGESTIONS);
+
+    if (requestId !== suggestionRequestId || cityInput.value.trim() !== query) {
+      return;
+    }
+
+    renderLocationSuggestions(locations);
+  } catch (error) {
+    if (requestId === suggestionRequestId) {
+      closeSuggestions();
+      console.debug('Atmosly location suggestions unavailable:', error.message);
+    }
+  }
+}
+
+async function searchLocations(query, count = 1) {
   const params = new URLSearchParams({
-    name: city,
-    count: '1',
+    name: query,
+    count: String(count),
     language: 'en',
     format: 'json'
   });
@@ -75,12 +147,79 @@ async function getLocation(city) {
   }
 
   const data = await response.json();
+  return data.results || [];
+}
 
-  if (!data.results || data.results.length === 0) {
+function renderLocationSuggestions(locations) {
+  if (!locations.length) {
+    closeSuggestions();
+    return;
+  }
+
+  suggestionsBox.innerHTML = locations.map((location, index) => {
+    const meta = [location.admin1, location.country].filter(Boolean).join(', ');
+
+    return `
+      <button class="location-suggestion" type="button" role="option" aria-selected="false" data-suggestion-index="${index}">
+        <span class="suggestion-icon" aria-hidden="true">⌖</span>
+        <span class="suggestion-copy">
+          <span class="suggestion-name">${escapeHtml(location.name)}</span>
+          <span class="suggestion-meta">${escapeHtml(meta)}</span>
+        </span>
+      </button>
+    `;
+  }).join('');
+
+  suggestionsBox.querySelectorAll('.location-suggestion').forEach((button, index) => {
+    button.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      selectLocation(locations[index]);
+    });
+  });
+
+  suggestionsBox.classList.add('is-visible');
+  cityInput.setAttribute('aria-expanded', 'true');
+}
+
+function selectLocation(location) {
+  selectedLocation = location;
+  cityInput.value = normalizeLocationName(location);
+  closeSuggestions();
+  loadWeatherForLocation(location);
+}
+
+async function loadWeatherForLocation(location) {
+  setLoadingState(true);
+  const requestStartedAt = performance.now();
+
+  try {
+    const weather = await getWeather(location.latitude, location.longitude);
+    displayCurrentWeather(location, weather);
+    formMessage.textContent = `Weather updated for ${location.name}.`;
+  } catch (error) {
+    console.error('Atmosly weather request failed:', error);
+    formMessage.textContent = error.message;
+  } finally {
+    setLoadingState(false);
+    console.debug(`Atmosly search completed in ${Math.round(performance.now() - requestStartedAt)}ms.`);
+  }
+}
+
+async function getLocation(city) {
+  const normalizedCity = city.toLowerCase();
+  const cachedLocation = getCachedLocation(normalizedCity);
+
+  if (cachedLocation) {
+    return cachedLocation;
+  }
+
+  const locations = await searchLocations(city, 1);
+
+  if (!locations.length) {
     throw new Error(`We could not find a city named "${city}".`);
   }
 
-  const location = data.results[0];
+  const location = locations[0];
   saveLocation(normalizedCity, location);
   return location;
 }
@@ -149,6 +288,42 @@ function setLoadingState(isLoading) {
   if (isLoading) {
     formMessage.textContent = 'Fetching the latest weather data...';
   }
+}
+
+function closeSuggestions() {
+  suggestionRequestId += 1;
+  suggestionsBox.classList.remove('is-visible');
+  suggestionsBox.innerHTML = '';
+  cityInput.setAttribute('aria-expanded', 'false');
+  activeSuggestionIndex = -1;
+}
+
+function getSuggestionOptions() {
+  return [...suggestionsBox.querySelectorAll('.location-suggestion')].map((button) => ({
+    button,
+    location: button.location
+  }));
+}
+
+function updateActiveSuggestion(options) {
+  options.forEach((option, index) => {
+    const isActive = index === activeSuggestionIndex;
+    option.button.classList.toggle('is-active', isActive);
+    option.button.setAttribute('aria-selected', String(isActive));
+  });
+}
+
+function normalizeLocationName(location) {
+  return location.name || '';
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }
 
 function getCachedLocation(city) {
