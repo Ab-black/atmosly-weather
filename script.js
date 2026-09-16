@@ -1,4 +1,4 @@
-// Atmosly — Phase 6: dynamic weather data from Open-Meteo.
+// Atmosly — Phase 8: live weather updates from Open-Meteo.
 
 const searchForm = document.querySelector('#search-form');
 const cityInput = document.querySelector('#city-input');
@@ -52,7 +52,7 @@ searchForm.addEventListener('submit', async (event) => {
     const location = selectedLocation && normalizeLocationName(selectedLocation).toLowerCase() === city.toLowerCase()
       ? selectedLocation
       : await getLocation(city);
-    const weather = await getWeather(location.latitude, location.longitude);
+    const weather = await getWeather(location.latitude, location.longitude, true);
 
     selectedLocation = location;
     displayWeather(location, weather);
@@ -196,7 +196,7 @@ async function loadWeatherForLocation(location) {
   const requestStartedAt = performance.now();
 
   try {
-    const weather = await getWeather(location.latitude, location.longitude);
+    const weather = await getWeather(location.latitude, location.longitude, true);
     displayWeather(location, weather);
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
@@ -227,9 +227,9 @@ async function getLocation(city) {
   return location;
 }
 
-async function getWeather(latitude, longitude) {
+async function getWeather(latitude, longitude, forceRefresh = false) {
   const cacheKey = `weather:${latitude.toFixed(3)},${longitude.toFixed(3)}`;
-  const cachedWeather = getCachedWeather(cacheKey);
+  const cachedWeather = forceRefresh ? null : getCachedWeather(cacheKey);
 
   if (cachedWeather) {
     return cachedWeather;
@@ -485,5 +485,7 @@ function getWeatherIcon(code) {
   return '🌤️';
 }
 
-// Keep the initial page date current until the first API result is displayed.
-weatherElements.date.textContent = formatWeatherDate(new Date().toISOString(), Intl.DateTimeFormat().resolvedOptions().timeZone);
+weatherElements.date.textContent = formatWeatherDate(
+  new Date().toISOString(),
+  Intl.DateTimeFormat().resolvedOptions().timeZone
+);
