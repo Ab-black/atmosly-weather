@@ -19,6 +19,8 @@ const weatherElements = {
 
 const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
+const LOCATION_CACHE_KEY = 'atmosly-location-cache';
+const WEATHER_CACHE_TTL = 5 * 60 * 1000;
 
 searchForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -32,6 +34,7 @@ searchForm.addEventListener('submit', async (event) => {
   }
 
   setLoadingState(true);
+  const requestStartedAt = performance.now();
 
   try {
     const location = await getLocation(city);
@@ -44,10 +47,18 @@ searchForm.addEventListener('submit', async (event) => {
     formMessage.textContent = error.message;
   } finally {
     setLoadingState(false);
+    console.debug(`Atmosly search completed in ${Math.round(performance.now() - requestStartedAt)}ms.`);
   }
 });
 
 async function getLocation(city) {
+  const normalizedCity = city.toLowerCase();
+  const cachedLocation = getCachedLocation(normalizedCity);
+
+  if (cachedLocation) {
+    return cachedLocation;
+  }
+
   const params = new URLSearchParams({
     name: city,
     count: '1',
@@ -55,7 +66,9 @@ async function getLocation(city) {
     format: 'json'
   });
 
-  const response = await fetch(`${GEOCODING_API}?${params}`);
+  const response = await fetch(`${GEOCODING_API}?${params}`, {
+    headers: { Accept: 'application/json' }
+  });
 
   if (!response.ok) {
     throw new Error('Unable to search for that city right now.');
@@ -67,10 +80,19 @@ async function getLocation(city) {
     throw new Error(`We could not find a city named "${city}".`);
   }
 
-  return data.results[0];
+  const location = data.results[0];
+  saveLocation(normalizedCity, location);
+  return location;
 }
 
 async function getWeather(latitude, longitude) {
+  const cacheKey = `weather:${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+  const cachedWeather = getCachedWeather(cacheKey);
+
+  if (cachedWeather) {
+    return cachedWeather;
+  }
+
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),
@@ -88,13 +110,17 @@ async function getWeather(latitude, longitude) {
     timezone: 'auto'
   });
 
-  const response = await fetch(`${WEATHER_API}?${params}`);
+  const response = await fetch(`${WEATHER_API}?${params}`, {
+    headers: { Accept: 'application/json' }
+  });
 
   if (!response.ok) {
     throw new Error('Unable to retrieve weather data right now.');
   }
 
-  return response.json();
+  const weather = await response.json();
+  saveWeather(cacheKey, weather);
+  return weather;
 }
 
 function displayCurrentWeather(location, weather) {
@@ -122,6 +148,51 @@ function setLoadingState(isLoading) {
 
   if (isLoading) {
     formMessage.textContent = 'Fetching the latest weather data...';
+  }
+}
+
+function getCachedLocation(city) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(LOCATION_CACHE_KEY) || '{}');
+    return cache[city] || null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocation(city, location) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(LOCATION_CACHE_KEY) || '{}');
+    cache[city] = location;
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore storage errors and continue with the API result.
+  }
+}
+
+function getCachedWeather(cacheKey) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+
+    if (!cached || Date.now() - cached.timestamp > WEATHER_CACHE_TTL) {
+      localStorage.removeItem(cacheKey);
+      return null;
+    }
+
+    return cached.data;
+  } catch {
+    return null;
+  }
+}
+
+function saveWeather(cacheKey, weather) {
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({
+      timestamp: Date.now(),
+      data: weather
+    }));
+  } catch {
+    // Ignore storage errors and continue normally.
   }
 }
 
