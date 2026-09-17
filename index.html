@@ -10,8 +10,24 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    .search-wrap { position: relative; max-width: 700px; }
-    .search-wrap .search-form { max-width: none; }
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 10px;
+      left: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--text);
+      transform: translateY(-150%);
+      transition: transform 150ms ease;
+    }
+    .skip-link:focus { transform: translateY(0); outline: 3px solid rgba(37,99,235,.35); outline-offset: 2px; }
+    :focus-visible { outline: 3px solid rgba(37,99,235,.42); outline-offset: 3px; }
+    .search-form input:focus-visible { outline: 0; }
+    .nav-link { min-height: 44px; display: inline-flex; align-items: center; }
+    .search-form button { min-height: 44px; min-width: 96px; }
+    .location-suggestion { min-height: 48px; }
     .location-suggestions {
       position: absolute;
       z-index: 20;
@@ -77,6 +93,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .search-wrap:has(.search-form button:disabled) + .form-message::before { animation: none; }
+      html { scroll-behavior: auto; }
     }
 
     @media (max-width: 560px) {
@@ -86,6 +103,8 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html" aria-label="Atmosly home"><span class="brand-mark" aria-hidden="true">A</span>Atmosly</a>
@@ -96,21 +115,21 @@
     </div>
   </header>
 
-  <main>
-    <section class="hero" id="weather">
+  <main id="main-content" tabindex="-1">
+    <section class="hero" id="weather" aria-labelledby="hero-title">
       <div class="hero-glow hero-glow-one" aria-hidden="true"></div>
       <div class="hero-glow hero-glow-two" aria-hidden="true"></div>
       <div class="container hero-inner">
         <div class="hero-copy">
           <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Live weather</p>
-          <h1>Know the weather.<br><span>Plan your day.</span></h1>
+          <h1 id="hero-title">Know the weather.<br><span>Plan your day.</span></h1>
           <p class="hero-text">Get clear, up-to-date weather conditions and forecasts for any city around the world.</p>
 
           <div class="search-wrap">
-            <form class="search-form" id="search-form" role="search">
+            <form class="search-form" id="search-form" role="search" aria-label="Search weather by city">
               <label class="sr-only" for="city-input">Search for a city</label>
               <span class="search-icon" aria-hidden="true">⌕</span>
-              <input id="city-input" name="city" type="search" placeholder="Search for a city..." autocomplete="off" required aria-autocomplete="list" aria-controls="location-suggestions" aria-expanded="false">
+              <input id="city-input" name="city" type="search" placeholder="Search for a city..." autocomplete="off" required aria-required="true" aria-autocomplete="list" aria-controls="location-suggestions" aria-expanded="false" aria-describedby="form-message">
               <button type="submit">Search</button>
             </form>
             <div class="location-suggestions" id="location-suggestions" role="listbox" aria-label="Location suggestions"></div>
@@ -130,7 +149,7 @@
           <p class="section-note">Local conditions at a glance</p>
         </div>
 
-        <article class="current-weather" aria-live="polite">
+        <article class="current-weather" aria-label="Current weather conditions" aria-live="polite">
           <div class="current-main">
             <div class="location-row">
               <span class="location-pin" aria-hidden="true">⌖</span>
@@ -182,7 +201,7 @@
           <p class="section-note">Plan ahead with confidence</p>
         </div>
 
-        <div class="forecast-grid" id="forecast-list" aria-live="polite">
+        <div class="forecast-grid" id="forecast-list" aria-label="Five-day weather forecast" aria-live="polite">
           <article class="forecast-card featured"><span class="forecast-day">Today</span><span class="forecast-icon" aria-hidden="true">☀️</span><strong>29° / 24°</strong><span class="forecast-condition">Partly cloudy</span></article>
           <article class="forecast-card"><span class="forecast-day">Thu, Sep 17</span><span class="forecast-icon" aria-hidden="true">🌤️</span><strong>30° / 24°</strong><span class="forecast-condition">Mostly sunny</span></article>
           <article class="forecast-card"><span class="forecast-day">Fri, Sep 18</span><span class="forecast-icon" aria-hidden="true">🌧️</span><strong>28° / 23°</strong><span class="forecast-condition">Light rain</span></article>
