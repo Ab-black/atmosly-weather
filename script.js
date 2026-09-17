@@ -1,4 +1,4 @@
-// Atmosly — Phase 8: live weather updates from Open-Meteo.
+// Atmosly — Phase 10: professional error handling for weather searches.
 
 const searchForm = document.querySelector('#search-form');
 const cityInput = document.querySelector('#city-input');
@@ -39,7 +39,7 @@ searchForm.addEventListener('submit', async (event) => {
 
   if (!city) {
     closeSuggestions();
-    formMessage.textContent = 'Please enter a city to search.';
+    formMessage.textContent = 'Please enter a city name.';
     cityInput.focus();
     return;
   }
@@ -59,7 +59,7 @@ searchForm.addEventListener('submit', async (event) => {
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
     console.error('Atmosly weather request failed:', error);
-    formMessage.textContent = error.message;
+    formMessage.textContent = getUserFacingError(error);
   } finally {
     setLoadingState(false);
     console.debug(`Atmosly search completed in ${Math.round(performance.now() - requestStartedAt)}ms.`);
@@ -140,16 +140,32 @@ async function searchLocations(query, count = 1) {
     format: 'json'
   });
 
-  const response = await fetch(`${GEOCODING_API}?${params}`, {
-    headers: { Accept: 'application/json' }
-  });
+  let response;
 
-  if (!response.ok) {
-    throw new Error('Unable to search for that city right now.');
+  try {
+    response = await fetch(`${GEOCODING_API}?${params}`, {
+      headers: { Accept: 'application/json' }
+    });
+  } catch (error) {
+    const networkError = new Error('Geocoding request failed.');
+    networkError.code = 'network_failure';
+    throw networkError;
   }
 
-  const data = await response.json();
-  return data.results || [];
+  if (!response.ok) {
+    const apiError = new Error('Geocoding API request failed.');
+    apiError.code = 'api_failure';
+    throw apiError;
+  }
+
+  try {
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    const responseError = new Error('Invalid geocoding response.');
+    responseError.code = 'api_failure';
+    throw responseError;
+  }
 }
 
 function renderLocationSuggestions(locations) {
@@ -201,7 +217,7 @@ async function loadWeatherForLocation(location) {
     formMessage.textContent = `Weather updated for ${location.name}.`;
   } catch (error) {
     console.error('Atmosly weather request failed:', error);
-    formMessage.textContent = error.message;
+    formMessage.textContent = getUserFacingError(error);
   } finally {
     setLoadingState(false);
     console.debug(`Atmosly search completed in ${Math.round(performance.now() - requestStartedAt)}ms.`);
@@ -219,7 +235,9 @@ async function getLocation(city) {
   const locations = await searchLocations(city, 1);
 
   if (!locations.length) {
-    throw new Error(`We could not find a city named "${city}".`);
+    const notFoundError = new Error('City not found.');
+    notFoundError.code = 'city_not_found';
+    throw notFoundError;
   }
 
   const location = locations[0];
@@ -258,17 +276,54 @@ async function getWeather(latitude, longitude, forceRefresh = false) {
     timezone: 'auto'
   });
 
-  const response = await fetch(`${WEATHER_API}?${params}`, {
-    headers: { Accept: 'application/json' }
-  });
+  let response;
 
-  if (!response.ok) {
-    throw new Error('Unable to retrieve weather data right now.');
+  try {
+    response = await fetch(`${WEATHER_API}?${params}`, {
+      headers: { Accept: 'application/json' }
+    });
+  } catch (error) {
+    const networkError = new Error('Weather request failed.');
+    networkError.code = 'network_failure';
+    throw networkError;
   }
 
-  const weather = await response.json();
+  if (!response.ok) {
+    const apiError = new Error('Weather API request failed.');
+    apiError.code = 'api_failure';
+    throw apiError;
+  }
+
+  let weather;
+
+  try {
+    weather = await response.json();
+  } catch (error) {
+    const responseError = new Error('Invalid weather response.');
+    responseError.code = 'api_failure';
+    throw responseError;
+  }
+
+  if (!weather.current || !weather.current_units || !weather.daily) {
+    const dataError = new Error('Incomplete weather response.');
+    dataError.code = 'api_failure';
+    throw dataError;
+  }
+
   saveWeather(cacheKey, weather);
   return weather;
+}
+
+function getUserFacingError(error) {
+  switch (error?.code) {
+    case 'city_not_found':
+      return 'City not found. Please check the spelling and try again.';
+    case 'network_failure':
+    case 'api_failure':
+      return 'Unable to fetch weather data. Please check your connection and try again.';
+    default:
+      return 'Unable to fetch weather data. Please check your connection and try again.';
+  }
 }
 
 function displayWeather(location, weather) {
@@ -441,34 +496,14 @@ function formatVisibility(meters) {
 
 function getWeatherCondition(code) {
   const conditions = {
-    0: 'Clear sky',
-    1: 'Mainly clear',
-    2: 'Partly cloudy',
-    3: 'Overcast',
-    45: 'Fog',
-    48: 'Rime fog',
-    51: 'Light drizzle',
-    53: 'Moderate drizzle',
-    55: 'Dense drizzle',
-    56: 'Light freezing drizzle',
-    57: 'Dense freezing drizzle',
-    61: 'Slight rain',
-    63: 'Moderate rain',
-    65: 'Heavy rain',
-    66: 'Light freezing rain',
-    67: 'Heavy freezing rain',
-    71: 'Slight snow',
-    73: 'Moderate snow',
-    75: 'Heavy snow',
-    77: 'Snow grains',
-    80: 'Slight rain showers',
-    81: 'Moderate rain showers',
-    82: 'Violent rain showers',
-    85: 'Slight snow showers',
-    86: 'Heavy snow showers',
-    95: 'Thunderstorm',
-    96: 'Thunderstorm with slight hail',
-    99: 'Thunderstorm with heavy hail'
+    0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+    45: 'Fog', 48: 'Rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle',
+    55: 'Dense drizzle', 56: 'Light freezing drizzle', 57: 'Dense freezing drizzle',
+    61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain', 66: 'Light freezing rain',
+    67: 'Heavy freezing rain', 71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow',
+    77: 'Snow grains', 80: 'Slight rain showers', 81: 'Moderate rain showers',
+    82: 'Violent rain showers', 85: 'Slight snow showers', 86: 'Heavy snow showers',
+    95: 'Thunderstorm', 96: 'Thunderstorm with slight hail', 99: 'Thunderstorm with heavy hail'
   };
 
   return conditions[code] || 'Unknown conditions';
