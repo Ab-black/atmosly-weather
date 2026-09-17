@@ -377,7 +377,19 @@ function displayForecast(weather) {
 
 function applyWeatherAtmosphere(code) {
   const atmosphere = getWeatherAtmosphere(code);
+  const atmosphereStyles = {
+    clear: { start: '#e5f1ff', end: '#f7fbff', bg: '#f6f9fd', soft: '#f9fbff' },
+    cloudy: { start: '#e9eef5', end: '#f7f9fc', bg: '#f5f7fa', soft: '#f9fafc' },
+    rain: { start: '#dce9f7', end: '#f1f6fb', bg: '#f3f7fb', soft: '#f7faff' },
+    storm: { start: '#d8e0ea', end: '#eef2f6', bg: '#eef2f6', soft: '#f5f7fa' },
+    snow: { start: '#e6f3fb', end: '#f5fbff', bg: '#f4f9fc', soft: '#f8fcff' }
+  }[atmosphere];
+
   document.body.dataset.weather = atmosphere;
+  document.body.style.setProperty('--hero-start', atmosphereStyles.start);
+  document.body.style.setProperty('--hero-end', atmosphereStyles.end);
+  document.body.style.setProperty('--bg', atmosphereStyles.bg);
+  document.body.style.setProperty('--surface-soft', atmosphereStyles.soft);
 }
 
 function getWeatherAtmosphere(code) {
