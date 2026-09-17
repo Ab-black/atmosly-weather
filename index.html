@@ -57,6 +57,28 @@
     .suggestion-name { display: block; font-weight: 700; }
     .suggestion-meta { display: block; margin-top: 2px; color: var(--muted); font-size: .78rem; }
     .search-form button:disabled { cursor: wait; opacity: .72; }
+
+    /* Phase 9: show a visible loading indicator while the API request is pending. */
+    .form-message { display: flex; align-items: center; gap: 8px; }
+    .search-wrap:has(.search-form button:disabled) + .form-message { color: var(--accent); font-weight: 600; }
+    .search-wrap:has(.search-form button:disabled) + .form-message::before {
+      content: "";
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      border: 2px solid rgba(37,99,235,.22);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: atmosly-spin .75s linear infinite;
+    }
+    @keyframes atmosly-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .search-wrap:has(.search-form button:disabled) + .form-message::before { animation: none; }
+    }
+
     @media (max-width: 560px) {
       .location-suggestions { top: calc(100% + 7px); }
       .location-suggestion { padding: 12px 13px; }
