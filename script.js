@@ -1,4 +1,4 @@
-// Atmosly — Phase 10: professional error handling for weather searches.
+// Atmosly — Phase 12: weather-responsive visual atmosphere.
 
 const searchForm = document.querySelector('#search-form');
 const cityInput = document.querySelector('#city-input');
@@ -345,6 +345,7 @@ function displayCurrentWeather(location, weather) {
   weatherElements.wind.textContent = `${Math.round(current.wind_speed_10m)} ${units.wind_speed_10m}`;
   weatherElements.pressure.textContent = `${Math.round(current.surface_pressure)} ${units.surface_pressure}`;
   weatherElements.visibility.textContent = `${formatVisibility(current.visibility)} ${units.visibility}`;
+  applyWeatherAtmosphere(current.weather_code);
 }
 
 function displayForecast(weather) {
@@ -372,6 +373,20 @@ function displayForecast(weather) {
   }).join('');
 
   weatherElements.forecast.innerHTML = cards;
+}
+
+function applyWeatherAtmosphere(code) {
+  const atmosphere = getWeatherAtmosphere(code);
+  document.body.dataset.weather = atmosphere;
+}
+
+function getWeatherAtmosphere(code) {
+  if (code === 0) return 'clear';
+  if ([1, 2, 3, 45, 48].includes(code)) return 'cloudy';
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'rain';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
+  if ([95, 96, 99].includes(code)) return 'storm';
+  return 'cloudy';
 }
 
 function setLoadingState(isLoading) {
