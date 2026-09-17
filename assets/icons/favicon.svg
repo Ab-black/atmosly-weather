@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Atmosly weather icon</title>
+  <desc id="desc">A sun and cloud weather symbol for Atmosly</desc>
+  <rect width="64" height="64" rx="16" fill="#2563eb"/>
+  <circle cx="39" cy="25" r="11" fill="#fbbf24"/>
+  <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">
+    <path d="M39 9v5"/><path d="M39 36v5"/><path d="m23 25 5 0"/><path d="m50 25-5 0"/>
+    <path d="m27.7 13.7 3.5 3.5"/><path d="m46.8 32.8 3.5 3.5"/>
+    <path d="m50.3 13.7-3.5 3.5"/><path d="m31.2 32.8-3.5 3.5"/>
+  </g>
+  <path d="M20 48h27c6 0 9-3.7 9-8.2 0-4.8-3.9-8.5-8.7-8.5-.8 0-1.5.1-2.2.3-1.9-5.4-7-9.2-13.1-9.2-7.5 0-13.5 5.7-14 13-4.3.4-7.6 3-7.6 6.3C10.4 45.3 14.2 48 20 48Z" fill="#fff"/>
+</svg>
